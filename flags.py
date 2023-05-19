@@ -1,0 +1,25 @@
+# Flag Inizialization
+classes = 2
+test = True
+train = True
+initial_model_training = False
+initial_model_test = False
+pruning = False
+final_model_test = True
+final_model_test_path = '/raid/users/eprincipi/CL_nilm/CRNN_final_model__M2+1_H4LWF_UKDALE_1[0.6, 0.4].h5'
+initial_model_path = '/raid/users/eprincipi/CL_nilm/CRNN_model__KE_WM_UKDALE.h5'
+window_size = 2550
+batch_size = 64
+batch_size_dyn = 1
+lr = 0.002
+patience = 5
+loss_weights = [0.6, 0.4] #[CLASS LOSS, KD LOSS]
+a = 1000
+b = 2051
+c = 4477
+d = 7778
+thres_strong = 0 # [0.003057475, 0.034294564, 0.60322195] #[0.003057475, 0.020664219, 0.44901252] #[0.1, 0.070924655, 0.4757256]
+dataset = 'UKDALE'
+house = 'H4'
+more = 'one'
+approach = 'AIL'
