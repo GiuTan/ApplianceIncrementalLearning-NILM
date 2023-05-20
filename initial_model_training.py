@@ -25,22 +25,19 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 
 os.environ["CUDA_VISIBLE_DEVICES"]="6"
 
-file_agg_path =  '/raid/users/eprincipi/KD_agg_UKDALE/'
-file_labels_path = '/raid/users/eprincipi/KD_labels_UKDALE/'
+file_agg_path =  '../agg_UKDALE/'
+file_labels_path = '../labels_UKDALE/'
 
-if initial_model_training or pruning:
-    if pruning:
-        type_ = '_KE_WM_pruned' + dataset
-    else:
-        type_= '_KE_WM_MW_' + dataset
-        print(type_)
 
-X_val = np.load(file_agg_path + 'new_X_val.npy')
-Y_val = np.load(file_labels_path + 'new_Y_val.npy')
-X_test_r = np.load('/raid/users/eprincipi/KD_agg_REFIT/new2_X_test.npy')
-Y_test_r = np.load('/raid/users/eprincipi/KD_labels_REFIT/new2_Y_test.npy')
-X_train = np.load(file_agg_path + 'new_X_train.npy')
-Y_train = np.load(file_labels_path + 'new_Y_train.npy')
+type_= '_KE_WM_MW_' + dataset
+        
+
+X_val = np.load(file_agg_path + 'X_val.npy')
+Y_val = np.load(file_labels_path + 'Y_val.npy')
+X_test_r = np.load('../agg_REFIT/X.npy')
+Y_test_r = np.load('../labels_REFIT/Y.npy')
+X_train = np.load(file_agg_path + 'X_train.npy')
+Y_train = np.load(file_labels_path + 'Y_train.npy')
 
 Y_test_r = np.delete(Y_test_r, [1, 3, 4, 5], 2)
 Y_val = np.delete(Y_val, [1, 3, 4, 5], 2)
@@ -72,12 +69,11 @@ if dataset == 'REFIT':
 else:
     train_mean = 279.42
     train_std = 393.94
+
 print("Mean train")
 print(train_mean)
 print("Std train")
 print(train_std)
-
-
 
 x_train = standardize_data(x_train, train_mean, train_std)
 X_val = standardize_data(X_val, train_mean, train_std)
@@ -109,7 +105,7 @@ file_writer.set_as_default()
 
 history_ = initial_CRNN.fit(x=x_train, y=y_strong_train, shuffle=True, epochs=1000, batch_size=batch_size,
                                 validation_data=(X_val, Y_val), callbacks=[early_stop, tensorboard], verbose=1)
-initial_CRNN.save_weights('/raid/users/eprincipi/CL_nilm/CRNN_model_' + type_ + '.h5')
+initial_CRNN.save_weights('../CRNN_model_' + type_ + '.h5')
 
 X_val = X_test_r
 Y_val = Y_test_r

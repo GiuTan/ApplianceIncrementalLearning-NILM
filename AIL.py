@@ -23,23 +23,20 @@ tf.config.threading.set_intra_op_parallelism_threads(1)
 
 os.environ["CUDA_VISIBLE_DEVICES"]="6"
 
-file_agg_path =  '/raid/users/eprincipi/KD_agg_UKDALE/'
-file_labels_path = '/raid/users/eprincipi/KD_labels_UKDALE/'
 
-
-X = np.load('/raid/users/eprincipi/KD_agg_REFIT/new2_X_test.npy')
-Y = np.load('/raid/users/eprincipi/KD_labels_REFIT/new2_Y_test.npy')
+X = np.load('../agg_REFIT/agg.npy')
+Y = np.load('../labels_REFIT/labels.npy')
 
 if classes == 2 and more == 'one':
     model_ = '_M2+1_'
-    #Y = np.delete(Y, [1,4,5])
+    
 else:
     if classes == 2 and more == 'two':
         model_ = '_M2+2_'
-        #Y = np.delete(Y, [1, 5])
+        
     else:
         model_ = '_M2+1+1_'
-        #Y = np.delete(Y, [1, 5])
+        
 
 type_ = model_ + str(house) + '_AIL_' + dataset + '_' + str(batch_size) + str(loss_weights) + 'PROVACODICE'
 
@@ -185,9 +182,9 @@ history = MODEL.fit(x=X_train, y=Y_train, shuffle=True, epochs=1000, batch_size=
                                        validation_data=(X_test,Y_test), callbacks=[early_stop], verbose=1)
 
 if approach == 'AIL':
-    MODEL.final_x.save_weights('/raid/users/eprincipi/CL_nilm/CRNN_final_model_' + type_ + '.h5')
+    MODEL.final_x.save_weights('../CRNN_final_model_' + type_ + '.h5')
 else:
-    MODEL.final.save_weights('/raid/users/eprincipi/CL_nilm/CRNN_final_model_' + type_ + '.h5')
+    MODEL.final.save_weights('../CRNN_final_model_' + type_ + '.h5')
 
 classes = classes_monitored
 
