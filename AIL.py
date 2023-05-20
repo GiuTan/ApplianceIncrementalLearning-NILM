@@ -6,7 +6,6 @@ import network.metrics_losses
 import os
 from sklearn.metrics import classification_report, multilabel_confusion_matrix
 from metrics import *
-from network.pruning import *
 from flags import *
 from network.dynamic_finetuning import *
 
@@ -33,16 +32,16 @@ Y = np.load('/raid/users/eprincipi/KD_labels_REFIT/new2_Y_test.npy')
 
 if classes == 2 and more == 'one':
     model_ = '_M2+1_'
-    Y = np.delete(Y, [1,4,5])
+    #Y = np.delete(Y, [1,4,5])
 else:
     if classes == 2 and more == 'two':
         model_ = '_M2+2_'
-        Y = np.delete(Y, [1, 5])
+        #Y = np.delete(Y, [1, 5])
     else:
         model_ = '_M2+1+1_'
-        Y = np.delete(Y, [1, 5])
+        #Y = np.delete(Y, [1, 5])
 
-type_ = model_ + str(house) + '_AIL_' + dataset + '_' + str(batch_size) + str(loss_weights)
+type_ = model_ + str(house) + '_AIL_' + dataset + '_' + str(batch_size) + str(loss_weights) + 'PROVACODICE'
 
 
 if house == 'H2':
@@ -136,15 +135,17 @@ gamma = K.variable(1.0)
 initial_CRNN = CRNN_construction(window_size,weight, lr=lr, classes=classes, drop_out=drop, kernel = kernel, num_layers=num_layers, gru_units=gru_units, cs=None,strong_weak_flag=True, temperature=1.0)
 initial_CRNN.load_weights(initial_model_path)
 
-early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_F1_score', mode='max',
+early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', mode='max',
                                                           patience=patience, restore_best_weights=True)
 
 if approach == 'LwF':
+    batch_size_ = batch_size
     final_CRNN = CRNN_construction_final(window_size, initial_model = initial_CRNN.get_weights(), lr=lr, classes=(classes), drop_out=drop, kernel = kernel, num_layers=num_layers, gru_units=gru_units)
     final_CRNN.summary()
     MODEL = STU_TEACH(initial_CRNN, final_CRNN, classes)
 
 if approach == 'AIL':
+    batch_size_ = batch_size_dyn
     final_CRNN_x = CRNN_construction_final_n(window_size, initial_model=initial_CRNN.get_weights(), lr=lr,
                                              classes=(classes), drop_out=drop, kernel=kernel, num_layers=num_layers,
                                              gru_units=gru_units, flags=[False, False, False, False])
@@ -180,9 +181,13 @@ print('Train shape:',Y_train.shape)
 print('Val shape:', Y_val.shape)
 print('Test shape:', Y_test.shape)
 
-history = MODEL.fit(x=X_train, y=Y_train, shuffle=True, epochs=1000, batch_size=batch_size,
+history = MODEL.fit(x=X_train, y=Y_train, shuffle=True, epochs=1000, batch_size=batch_size_,
                                        validation_data=(X_test,Y_test), callbacks=[early_stop], verbose=1)
-MODEL.final.save_weights('/raid/users/eprincipi/CL_nilm/CRNN_final_model_' + type_ + '.h5')
+
+if approach == 'AIL':
+    MODEL.final_x.save_weights('/raid/users/eprincipi/CL_nilm/CRNN_final_model_' + type_ + '.h5')
+else:
+    MODEL.final.save_weights('/raid/users/eprincipi/CL_nilm/CRNN_final_model_' + type_ + '.h5')
 
 classes = classes_monitored
 

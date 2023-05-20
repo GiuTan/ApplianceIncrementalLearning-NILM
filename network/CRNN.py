@@ -14,14 +14,11 @@ class PruneBidirectional(tf.keras.layers.Bidirectional, prunable_layer.PrunableL
 def CRNN_block(x, kernel,drop_out,filters):
     conv_1 = tf.keras.layers.Conv2D(filters=filters, kernel_size=(kernel, 1), strides=(1, 1), padding='same',
                                     kernel_initializer='glorot_uniform')(x)
-    #print("conv_1")
-    #print(conv_1.shape)
+
     batch_norm_1 = tf.keras.layers.BatchNormalization()(conv_1, training=False)
     act_1 = tf.keras.layers.Activation('relu')(batch_norm_1)
     pool_1 = tf.keras.layers.MaxPooling2D(pool_size=(1, 1))(act_1)
     drop_1 = tf.keras.layers.Dropout(drop_out)(pool_1)
-    #print("drop_1")
-    #print(drop_1.shape)
     return drop_1
 
 
@@ -101,12 +98,7 @@ def CRNN_construction_final(window_size,initial_model, lr=0.0, classes=0, drop_o
 
 
     spec_x = tf.keras.layers.Reshape((x.shape[1], x.shape[3]))(x)
-    #print("Reshape")
-    #print(spec_x.shape)
     bi_direct = tf.keras.layers.Bidirectional(tf.keras.layers.GRU(units=gru_units,return_sequences=True))(spec_x)
-    #print("Bidirect")
-    #print(bi_direct.shape)
-
     model_CRNN = tf.keras.Model(inputs=input_data, outputs=bi_direct,
                                 name="CRNN")
 
@@ -122,11 +114,6 @@ def CRNN_construction_final(window_size,initial_model, lr=0.0, classes=0, drop_o
 
     new_model_CRNN = tf.keras.Model(inputs=model_CRNN.inputs, outputs=frame_level,
                                 name="CRNN")
-    #optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
-
-    # model_CRNN.compile(optimizer=optimizer, loss={
-    #         "strong_level": binary_crossentropy},
-    #                        metrics=[StatefullF1(n_class=classes+1)])
 
     # new_model_CRNN.layers[0].trainable = False
     # new_model_CRNN.layers[1].trainable = False
@@ -151,7 +138,4 @@ def CRNN_construction_final(window_size,initial_model, lr=0.0, classes=0, drop_o
 
     return new_model_CRNN
 
-# import os
-# os.environ["CUDA_VISIBLE_DEVICES"]= "2"
-# student = CRNN_construction(2550,0.1, lr=0.002, classes=6, drop_out=0.1, kernel = 5, num_layers=2, gru_units=32, cs=False)
-# student.summary()
+
