@@ -157,6 +157,7 @@ class STU_TEACH_dyn(tf.keras.Model):
 
 
             if i == 1:
+		self.final_1.load_weights('best_current_.h5')
                 self.final_optimizer.apply_gradients(zip(grads_x, self.final_1.trainable_weights))
                 predictions_final_x = self.final_1(x)
                 KD_loss_x = self.loss["KD_loss"](predictions_initial, predictions_final_x[:, :, :self.classes])  #(predictions_initial[:,:,:1],predictions_final_x[:,:,:1])
@@ -164,6 +165,7 @@ class STU_TEACH_dyn(tf.keras.Model):
                 sum_loss_x = self.loss_weights[1] * KD_loss_x + self.loss_weights[0] * classification_loss_x
                 list_loss.append(sum_loss_x.numpy())
             if i == 2:
+		self.final_2.load_weights('best_current_.h5')
                 self.final_optimizer.apply_gradients(zip(grads_x, self.final_2.trainable_weights))
                 predictions_final_x = self.final_2(x)
                 KD_loss_x = self.loss["KD_loss"](predictions_initial, predictions_final_x[:, :, :self.classes])  #(predictions_initial[:,:,:1],predictions_final_x[:,:,:1])
@@ -171,6 +173,7 @@ class STU_TEACH_dyn(tf.keras.Model):
                 sum_loss_x = self.loss_weights[1] * KD_loss_x + self.loss_weights[0] * classification_loss_x
                 list_loss.append(sum_loss_x.numpy())
             if i == 3:
+		self.final_3.load_weights('best_current_.h5')
                 self.final_optimizer.apply_gradients(zip(grads_x, self.final_3.trainable_weights))
                 predictions_final_x = self.final_3(x)
                 KD_loss_x = self.loss["KD_loss"](predictions_initial, predictions_final_x[:, :, :self.classes])  #(predictions_initial[:,:,:1],predictions_final_x[:,:,:1])
@@ -178,6 +181,7 @@ class STU_TEACH_dyn(tf.keras.Model):
                 sum_loss_x = self.loss_weights[1] * KD_loss_x + self.loss_weights[0] * classification_loss_x
                 list_loss.append(sum_loss_x.numpy())
             if i == 4:
+		self.final_4.load_weights('best_current_.h5')
                 self.final_optimizer.apply_gradients(zip(grads_x, self.final_4.trainable_weights))
                 predictions_final_x = self.final_4(x)
                 KD_loss_x = self.loss["KD_loss"](predictions_initial, predictions_final_x[:, :, :self.classes])  #(predictions_initial[:,:,:1],predictions_final_x[:,:,:1])

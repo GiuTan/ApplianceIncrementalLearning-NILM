@@ -1,4 +1,3 @@
-from network.CRNN_custom import *
 from network.CRNN import *
 from utils_func import *
 import random as python_random
@@ -8,7 +7,6 @@ from sklearn.metrics import classification_report, multilabel_confusion_matrix
 from metrics import *
 from tensorflow.keras.callbacks import TensorBoard
 from datetime import datetime
-from network.pruning import *
 from flags import *
 
 
@@ -23,62 +21,79 @@ os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
 tf.config.threading.set_inter_op_parallelism_threads(1)
 tf.config.threading.set_intra_op_parallelism_threads(1)
 
-os.environ["CUDA_VISIBLE_DEVICES"]="6"
+os.environ["CUDA_VISIBLE_DEVICES"]="7"
 
-file_agg_path =  '../agg_UKDALE/'
-file_labels_path = '../labels_UKDALE/'
+file_agg_path =  '/raid/users/eprincipi/KD_agg_UKDALE/'
+file_labels_path = '/raid/users/eprincipi/KD_labels_UKDALE/'
 
+type_= '_KE_WM_MW_' + dataset + '_' + house
+print(type_)
 
-type_= '_KE_WM_MW_' + dataset
-        
+X_val = np.load(file_agg_path + 'new_X_val.npy')
+Y_val = np.load(file_labels_path + 'new_Y_val.npy')
+X_refit = np.load('/raid/users/eprincipi/KD_agg_REFIT/new2_X_test.npy')
+Y_refit = np.load('/raid/users/eprincipi/KD_labels_REFIT/new2_Y_test.npy')
+X_train = np.load(file_agg_path + 'new_X_train.npy')
+Y_train = np.load(file_labels_path + 'new_Y_train.npy')
 
-X_val = np.load(file_agg_path + 'X_val.npy')
-Y_val = np.load(file_labels_path + 'Y_val.npy')
-X_test_r = np.load('../agg_REFIT/X.npy')
-Y_test_r = np.load('../labels_REFIT/Y.npy')
-X_train = np.load(file_agg_path + 'X_train.npy')
-Y_train = np.load(file_labels_path + 'Y_train.npy')
-
-Y_test_r = np.delete(Y_test_r, [1, 3, 4, 5], 2)
-Y_val = np.delete(Y_val, [1, 3, 4, 5], 2)
-Y_train = np.delete(Y_train, [1, 3, 4, 5], 2)
+Y_refit = np.delete(Y_refit, [3, 4, 5], 2)
+Y_refit = Y_refit[:, :, [0, 2, 1]]
+Y_val = np.delete(Y_val, [3, 4, 5], 2)
+Y_val = Y_val[:, :, [0, 2, 1]]
+Y_train = np.delete(Y_train, [3, 4, 5], 2)
+Y_train = Y_train[:, :, [0, 2, 1]]
 x_train = X_train
 y_strong_train = Y_train
 
 if house == 'H4':
-        X_test_r = X_test_r[c:d]
-        Y_test_r = Y_test_r[c:d]
+        X_refit = X_refit[c:d]
+        Y_refit = Y_refit[c:d]
 
-        X_test_r = X_test_r[180:]
-        Y_test_r = Y_test_r[180:]
+        X_test = X_refit[180:]
+        Y_test = Y_refit[180:]
 
 
 if house == 'H2':
     
-    X_test_r = X_test_r[a:b]
-    Y_test_r = Y_test_r[a:b]
+    X_refit = X_refit[a:b]
+    Y_refit = Y_refit[a:b]
 
-    X_test_r = X_test_r[180:]
-    Y_test_r = Y_test_r[180:]
+    if classes == 2 or classes == 3:
+
+        X_test = X_refit[180:]
+        Y_test = Y_refit[180:]
+    if classes == 4:
+        X_test = X_refit[180*2:]
+        Y_test = Y_refit[180*2:]
 
 
-# Aggregate Standardization #
-if dataset == 'REFIT':
-    train_mean = 481.58
-    train_std = 657.87
-else:
-    train_mean = 279.42
-    train_std = 393.94
+# # Aggregate Standardization #
+# if dataset == 'REFIT':
+#     train_mean = 481.58
+#     train_std = 657.87
+# else:
+#     train_mean = 279.42
+#     train_std = 393.94
 
+
+x_train = np.concatenate([x_train,X_refit[:180]])
+Y_train_dw = Y_refit[:180]
+y_strong_train[:, :, 1:2] = -1 # escludo labels kettle e wash
+Y_train_dw[:,:, 0:1] = -1 # escludo labels dish
+Y_train_dw[:,:, -1:] = -1
+y_strong_train = np.concatenate([y_strong_train,Y_train_dw], axis=0)
+train_mean = np.mean(x_train)
+train_std = np.std(x_train)
 print("Mean train")
 print(train_mean)
 print("Std train")
 print(train_std)
 
+
 x_train = standardize_data(x_train, train_mean, train_std)
 X_val = standardize_data(X_val, train_mean, train_std)
-X_test_r = standardize_data(X_test_r , train_mean, train_std)
-Y_test_r = np.where(Y_test_r >0.5, 1, 0)
+X_test = standardize_data(X_test , train_mean, train_std)
+Y_test= np.where(Y_test >0.5, 1, 0)
 Y_val = np.where(Y_val > 0.5, 1, 0)
 y_strong_train =  np.where(y_strong_train > 0.5, 1, 0)
 
@@ -90,8 +105,7 @@ gru_units = 64
 lr = 0.002
 drop_out = drop
 weight= 1e-2
-gamma = K.variable(1.0)
-weight_dyn = WeightAdjuster(weights=gamma)
+
 initial_CRNN = CRNN_construction(window_size,weight, lr=lr, classes=classes, drop_out=drop, kernel = kernel, num_layers=num_layers, gru_units=gru_units, cs=None,strong_weak_flag=True, temperature=1.0)
 
 early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_f1_score', mode='max',
@@ -103,14 +117,16 @@ file_writer = tf.summary.create_file_writer(log_dir_ + "/metrics")
 file_writer.set_as_default()
 
 
-history_ = initial_CRNN.fit(x=x_train, y=y_strong_train, shuffle=True, epochs=1000, batch_size=batch_size,
-                                validation_data=(X_val, Y_val), callbacks=[early_stop, tensorboard], verbose=1)
-initial_CRNN.save_weights('../CRNN_model_' + type_ + '.h5')
 
-X_val = X_test_r
-Y_val = Y_test_r
+history_ = initial_CRNN.fit(x=x_train, y=y_strong_train, shuffle=True, epochs=1000, batch_size=batch_size, validation_data=(X_test, Y_test), callbacks=[early_stop, tensorboard], verbose=1)
+#initial_CRNN.save_weights('/raid/users/eprincipi/CL_nilm/CRNN_model_' + type_ + '.h5')
+
+#initial_CRNN.load_weights('/raid/users/eprincipi/CL_nilm/CRNN_model_' + type_ + '.h5')
+
+X_val = X_test
+Y_val = Y_test
 output_strong = initial_CRNN.predict(x=X_val)
-output_strong_test = initial_CRNN.predict(x=X_test_r)
+output_strong_test = initial_CRNN.predict(x=X_test)
 
 print(Y_val.shape)
 print(output_strong.shape)
@@ -120,7 +136,7 @@ shape = output_strong.shape[0] * output_strong.shape[1]
 shape_test = output_strong_test.shape[0] * output_strong_test.shape[1]
 
 Y_val = Y_val.reshape(shape, classes)
-Y_test_r = Y_test_r.reshape(shape_test, classes)
+Y_test = Y_test.reshape(shape_test, classes)
 
                 # Y_train = y_strong_train.reshape(shape_train, classes)
 output_strong = output_strong.reshape(shape, classes)
@@ -141,5 +157,5 @@ output_strong_test = app_binarization_strong(output_strong_test, thres_strong, c
 output_strong = app_binarization_strong(output_strong, thres_strong, classes)
 
 print("Test")
-print(multilabel_confusion_matrix(Y_test_r, output_strong_test))
-print(classification_report(Y_test_r, output_strong_test))
+print(multilabel_confusion_matrix(Y_test, output_strong_test))
+print(classification_report(Y_test, output_strong_test))
